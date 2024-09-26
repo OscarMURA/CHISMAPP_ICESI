@@ -1,13 +1,13 @@
-package com.example.chismapp;
+package com.example.chismapp.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class client {
+public class ChatServer {
 
     public static void main(String[] args) {
-        SpringApplication.run(client.class, args);
+        SpringApplication.run(ChatServer.class, args);
     }
 
 }
