@@ -23,7 +23,7 @@ public class TCPConnection extends Thread {
     @Override
     public void run() {
         try {
-            // Recepción de mensajes del socket
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {

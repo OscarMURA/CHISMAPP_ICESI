@@ -1,10 +1,5 @@
 package com.example.chismapp.server;
 
-import com.example.chismapp.util.TCPConnection;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import com.example.chismapp.util.TCPConnection;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -14,29 +9,30 @@ import java.util.concurrent.Executors;
 public class ChatServer {
 
     private static final int PORT = 5000;
-    private static final int THREAD_POOL_SIZE = 10; // Número de hilos en el pool
+    private static final int THREAD_POOL_SIZE = 10;
+    private static GroupManager groupManager;
 
     public static void main(String[] args) {
-        // Crea un ThreadPool con un tamaño fijo de 10 hilos
+        // Initialize thread pool and group manager
         ExecutorService pool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+        groupManager = new GroupManager();  // Create the group manager
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Servidor escuchando en el puerto " + PORT);
+            System.out.println("Server listening on port " + PORT);
 
+            // Accept new client connections
             while (true) {
-                // Acepta una nueva conexión del cliente
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Nuevo cliente conectado: " + clientSocket.getInetAddress());
+                System.out.println("New client connected: " + clientSocket.getInetAddress());
 
-                // Crea un nuevo manejador de clientes y lo ejecuta en el ThreadPool
-                ClientHandler clientHandler = new ClientHandler(clientSocket);
+                // Create a new ClientHandler for each client and pass the GroupManager
+                ClientHandler clientHandler = new ClientHandler(clientSocket, groupManager);
                 pool.execute(clientHandler);
             }
 
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            // Cierra el ThreadPool cuando ya no se usará más
             pool.shutdown();
         }
     }
