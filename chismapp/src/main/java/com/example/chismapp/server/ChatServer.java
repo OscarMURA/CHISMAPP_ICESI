@@ -8,24 +8,29 @@ import java.util.concurrent.Executors;
 
 public class ChatServer {
 
-    private static final int PORT = 5000;
-    private static final int THREAD_POOL_SIZE = 10;
+    private static final int THREAD_POOL_SIZE = 20;
     private static GroupManager groupManager;
 
     public static void main(String[] args) {
-        // Initialize thread pool and group manager
+
         ExecutorService pool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
-        groupManager = new GroupManager();  // Create the group manager
+        groupManager = new GroupManager();  // Inicializa el gestor de grupos
 
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server listening on port " + PORT);
+        try (ServerSocket serverSocket = new ServerSocket(0)) { // Puerto automático asignado
+            int assignedPort = serverSocket.getLocalPort(); // Obtener el puerto asignado
+            System.out.println("Server listening on port " + assignedPort);
 
-            // Accept new client connections
+            // Inicia el descubrimiento del servidor en un hilo separado
+            ServerDiscovery serverDiscovery = new ServerDiscovery(assignedPort);
+            Thread discoveryThread = new Thread(serverDiscovery::startDiscovery);
+            discoveryThread.start(); // Iniciar el descubrimiento del servidor
+
             while (true) {
+                // Aceptar una nueva conexión del cliente
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("New client connected: " + clientSocket.getInetAddress());
 
-                // Create a new ClientHandler for each client and pass the GroupManager
+                // Crea un nuevo ClientHandler para cada cliente y lo ejecuta en el pool de hilos
                 ClientHandler clientHandler = new ClientHandler(clientSocket, groupManager);
                 pool.execute(clientHandler);
             }
@@ -33,6 +38,7 @@ public class ChatServer {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+
             pool.shutdown();
         }
     }
