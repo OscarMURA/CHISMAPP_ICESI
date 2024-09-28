@@ -22,7 +22,7 @@ public class ChatClient {
             return;
         }
 
-
+        // Inicializar la conexión del cliente con la IP y el puerto del servidor descubierto
         TCPConnection clientConnection = TCPConnection.getInstance();
         clientConnection.initAsClient(serverIp, serverPort);
 
@@ -42,7 +42,8 @@ public class ChatClient {
             // Mostrar comandos disponibles
             System.out.println("Available commands:");
             System.out.println("/group group_name - To create a group");
-            System.out.println("/message group_name message - To send a message to a group");
+            System.out.println("/message group_name <message - To send a message to a group");
+            System.out.println("/dm username message - To send a direct message to a user");
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -50,8 +51,10 @@ public class ChatClient {
                     clientConnection.sendMessage(line);  // Enviar comando para crear un grupo
                 } else if (line.startsWith("/message")) {
                     clientConnection.sendMessage(line);  // Enviar un mensaje a un grupo
+                } else if (line.startsWith("/dm")) {
+                    clientConnection.sendMessage(line);  // Enviar un mensaje directo
                 } else {
-                    System.out.println("Invalid command. Use /group or /message.");
+                    System.out.println("Invalid command. Use /group, /message, or /dm.");
                 }
             }
         } catch (IOException e) {
