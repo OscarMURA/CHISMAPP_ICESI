@@ -1,6 +1,9 @@
 package com.example.chismapp.server;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -56,8 +59,10 @@ public class ClientHandler implements Runnable {
                     } else {
                         out.println("User " + targetUserName + " not found.");
                     }
+                } else if (message.startsWith("VOICE:")) {
+                    handleVoiceMessage(message);
                 } else {
-                    out.println("Invalid command. Use /group, /message, or /dm.");
+                    out.println("Invalid command. Use /group, /message, /dm, or VOICE.");
                 }
             }
         } catch (IOException e) {
@@ -74,6 +79,30 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    private void handleVoiceMessage(String message) {
+        // Formato: VOICE:<destinatario>:<datos_audio_base64>
+        String[] parts = message.split(":", 3);
+        if (parts.length < 3) {
+            sendMessage("Malformed VOICE message.");
+            return;
+        }
+        String recipient = parts[1];
+        String encodedAudio = parts[2];
+        String fullMessage = "VOICE:" + userName + ":" + encodedAudio;
+
+        // Verificar si el destinatario es un grupo o un usuario
+        if (groupManager.isGroup(recipient)) {
+            groupManager.sendMessageToGroup(recipient, fullMessage);
+        } else {
+            // Enviar mensaje directo
+            ClientHandler targetHandler = userHandlers.get(recipient);
+            if (targetHandler != null) {
+                targetHandler.sendMessage(fullMessage);
+            } else {
+                sendMessage("User " + recipient + " not found.");
+            }
+        }
+    }
 
     public void sendMessage(String message) {
         try {
@@ -84,4 +113,3 @@ public class ClientHandler implements Runnable {
         }
     }
 }
-

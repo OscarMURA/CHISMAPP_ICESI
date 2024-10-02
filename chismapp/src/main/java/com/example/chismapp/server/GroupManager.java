@@ -13,7 +13,6 @@ public class GroupManager {
         this.groups = new HashMap<>();
     }
 
-
     public void createGroup(String groupName, ClientHandler clientHandler) {
         groups.putIfAbsent(groupName, new HashSet<>());
         groups.get(groupName).add(clientHandler);
@@ -26,5 +25,9 @@ public class GroupManager {
                 member.sendMessage(message);
             }
         }
+    }
+
+    public boolean isGroup(String groupName) {
+        return groups.containsKey(groupName);
     }
 }
