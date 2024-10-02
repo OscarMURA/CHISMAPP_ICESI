@@ -13,12 +13,12 @@ public class GroupManager {
         this.groups = new HashMap<>();
     }
 
-    public void createGroup(String groupName, ClientHandler clientHandler) {
+    public synchronized void createGroup(String groupName, ClientHandler clientHandler) {
         groups.putIfAbsent(groupName, new HashSet<>());
         groups.get(groupName).add(clientHandler);
     }
 
-    public void sendMessageToGroup(String groupName, String message) {
+    public synchronized void sendMessageToGroup(String groupName, String message) {
         Set<ClientHandler> groupMembers = groups.get(groupName);
         if (groupMembers != null) {
             for (ClientHandler member : groupMembers) {
@@ -27,7 +27,13 @@ public class GroupManager {
         }
     }
 
-    public boolean isGroup(String groupName) {
+    public synchronized boolean isGroup(String groupName) {
         return groups.containsKey(groupName);
+    }
+
+    public synchronized void removeUserFromAllGroups(ClientHandler clientHandler) {
+        for (Set<ClientHandler> members : groups.values()) {
+            members.remove(clientHandler);
+        }
     }
 }

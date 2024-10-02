@@ -62,15 +62,19 @@ public class ClientHandler implements Runnable {
                 } else if (message.startsWith("VOICE:")) {
                     handleVoiceMessage(message);
                 } else {
-                    out.println("Invalid command. Use /group, /message, /dm, or VOICE.");
+                    out.println("Invalid command. Use /group, /message, /dm, or this was VOICE MESSAGE.");
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Error handling client, for remove users " );
         } finally {
+            // Manejar la desconexión del usuario
             try {
                 if (userName != null) {
                     userHandlers.remove(userName); // Eliminar el usuario de la lista al desconectarse
+                    groupManager.removeUserFromAllGroups(this);
+                    broadcastMessage("SYSTEM: User " + userName + " has left the chat.");
+                    System.out.println("User disconnected: " + userName);
                 }
                 clientSocket.close(); // Cierra la conexión con el cliente cuando se termina
             } catch (IOException e) {
@@ -110,6 +114,15 @@ public class ClientHandler implements Runnable {
             out.println(message);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    // Método para difundir mensajes a todos los usuarios excepto este
+    private void broadcastMessage(String message) {
+        for (ClientHandler handler : userHandlers.values()) {
+            if (!handler.equals(this)) {
+                handler.sendMessage(message);
+            }
         }
     }
 }

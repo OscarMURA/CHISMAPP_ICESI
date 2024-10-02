@@ -8,7 +8,7 @@ import java.util.concurrent.Executors;
 
 public class ChatServer {
 
-    private static final int THREAD_POOL_SIZE = 20;
+    private static final int THREAD_POOL_SIZE = 10;
     private static GroupManager groupManager;
 
     public static void main(String[] args) {

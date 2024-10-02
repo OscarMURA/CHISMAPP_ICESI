@@ -32,7 +32,8 @@ public class TCPConnection extends Thread {
                 listener.onMessageReceived(line);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+           System.out.println("the server has been disconnected, Goodbye!");
+           System.exit(0);
         }
     }
 
