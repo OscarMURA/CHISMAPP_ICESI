@@ -2,6 +2,7 @@ package com.example.chismapp.model;
 
 import java.time.LocalDateTime;
 public class Message {
+    
     private String content;
     private User sender;
     private String recipient;  // Could be a username or a groupName
@@ -47,4 +48,5 @@ public class Message {
     public String toString() {
         return "[" + timestamp + "] " + sender.getUsername() + ": " + content;
     }
+
 }

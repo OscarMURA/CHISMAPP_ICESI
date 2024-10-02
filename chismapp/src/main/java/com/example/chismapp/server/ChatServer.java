@@ -1,5 +1,4 @@
 package com.example.chismapp.server;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -38,7 +37,6 @@ public class ChatServer {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-
             pool.shutdown();
         }
     }

@@ -45,6 +45,7 @@ public class ChatClient {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             System.out.println("Enter your username:");
             String clientName = reader.readLine();
+        
             clientConnection.sendMessage("USERNAME:" + clientName);  // Enviar el nombre de usuario del cliente al servidor
 
             // Mostrar comandos disponibles
@@ -65,7 +66,7 @@ public class ChatClient {
                 } else if (line.startsWith("/voice")) {
                     handleVoiceCommand(line, clientConnection);
                 } else {
-                    System.out.println("Invalid command. Use /group, /message, /dm, or /voice.");
+                    System.out.println("Invalid command. Use /group, /message, /dm, or this was MESSAGE VOICE.");
                 }
             }
         } catch (IOException e) {
