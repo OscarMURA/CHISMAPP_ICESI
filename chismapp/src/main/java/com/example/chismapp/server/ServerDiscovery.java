@@ -27,7 +27,7 @@ public class ServerDiscovery {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length, broadcastAddress, 4446);
                 socket.send(packet);
                 System.out.println("Server broadcast announcement sent: " + announcement);
-                Thread.sleep(1000);
+                Thread.sleep(5000);
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
