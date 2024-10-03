@@ -31,7 +31,7 @@ public class ChatClient {
         }
 
         // Inicializar la conexión del cliente con la IP y el puerto del servidor descubierto
-        clientConnection = TCPConnection.getInstance();
+        TCPConnection clientConnection = TCPConnection.getInstance();
         clientConnection.initAsClient(serverIp, serverPort);
 
         // Inicializar CallManager
@@ -131,7 +131,7 @@ public class ChatClient {
             System.out.println("Usage: /voice <username|group_name>");
             return;
         }
-        String recipient = parts[1].trim();
+        String recipient = parts[1];
 
         // Configurar el formato de audio
         AudioFormat format = getAudioFormat();
@@ -172,18 +172,13 @@ public class ChatClient {
             System.out.println("Received malformed voice message.");
             return;
         }
-        String sender = parts[1].trim();
+        String sender = parts[1];
         String encodedAudio = parts[2];
         byte[] audioData = Base64.getDecoder().decode(encodedAudio);
 
         // Reproducir el audio
-        if (callManager != null && callManager.currentCallParticipant != null && callManager.currentCallParticipant.equals(sender)) {
-            try {
-                callManager.player.initiateAudio(audioData);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        RecordPlayer player = new RecordPlayer(getAudioFormat());
+        player.initiateAudio(audioData);
         System.out.println("Received voice message from " + sender);
     }
 
