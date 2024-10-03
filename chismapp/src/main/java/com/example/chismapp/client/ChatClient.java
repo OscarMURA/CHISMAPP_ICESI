@@ -1,3 +1,4 @@
+// File: ChatClient.java
 package com.example.chismapp.client;
 
 import java.io.BufferedReader;
@@ -11,6 +12,9 @@ import javax.sound.sampled.AudioFormat;
 import com.example.chismapp.util.TCPConnection;
 
 public class ChatClient {
+
+    private static CallManager callManager;
+    private static TCPConnection clientConnection;
 
     public static void main(String[] args) {
         // Crear una instancia de ClientDiscovery y buscar el servidor
@@ -27,13 +31,29 @@ public class ChatClient {
         }
 
         // Inicializar la conexión del cliente con la IP y el puerto del servidor descubierto
-        TCPConnection clientConnection = TCPConnection.getInstance();
+        clientConnection = TCPConnection.getInstance();
         clientConnection.initAsClient(serverIp, serverPort);
+
+        // Inicializar CallManager
+        ChatClient chatClient = new ChatClient();
+        callManager = new CallManager(chatClient);
 
         // Asignar un listener para manejar mensajes del servidor
         clientConnection.setListener(message -> {
             if (message.startsWith("VOICE:")) {
                 handleVoiceMessage(message);
+            } else if (message.startsWith("CALL_INITIATED:")) {
+                String caller = message.substring("CALL_INITIATED:".length()).trim();
+                callManager.handleIncomingCall(caller);
+            } else if (message.startsWith("CALL_ACCEPTED:")) {
+                String recipient = message.substring("CALL_ACCEPTED:".length()).trim();
+                callManager.handleCallAccepted(recipient);
+            } else if (message.startsWith("CALL_REJECTED:")) {
+                String recipient = message.substring("CALL_REJECTED:".length()).trim();
+                callManager.handleCallRejected(recipient);
+            } else if (message.startsWith("CALL_ENDED:")) {
+                String participant = message.substring("CALL_ENDED:".length()).trim();
+                callManager.handleCallEnded(participant);
             } else {
                 System.out.println(message);
             }
@@ -45,7 +65,7 @@ public class ChatClient {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             System.out.println("Enter your username:");
             String clientName = reader.readLine();
-        
+
             clientConnection.sendMessage("USERNAME:" + clientName);  // Enviar el nombre de usuario del cliente al servidor
 
             // Mostrar comandos disponibles
@@ -54,6 +74,8 @@ public class ChatClient {
             System.out.println("/message group_name <message> - To send a message to a group");
             System.out.println("/dm username <message> - To send a direct message to a user");
             System.out.println("/voice <username|group_name> - To send a voice message");
+            System.out.println("/call <username> - To initiate a call to a user");
+            System.out.println("/endcall <username> - To end a call with a user");
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -65,8 +87,12 @@ public class ChatClient {
                     clientConnection.sendMessage(line);  // Enviar un mensaje directo
                 } else if (line.startsWith("/voice")) {
                     handleVoiceCommand(line, clientConnection);
+                } else if (line.startsWith("/call")) {
+                    handleCallCommand(line);
+                } else if (line.startsWith("/endcall")) {
+                    handleEndCallCommand(line);
                 } else {
-                    System.out.println("Invalid command. Use /group, /message, /dm, or this was MESSAGE VOICE.");
+                    System.out.println("Invalid command. Use /group, /message, /dm, /voice, /call, or /endcall.");
                 }
             }
         } catch (IOException e) {
@@ -74,13 +100,38 @@ public class ChatClient {
         }
     }
 
+    // Manejar el comando de llamada
+    private static void handleCallCommand(String command) {
+        // Formato: /call <username>
+        String[] parts = command.split(" ", 2);
+        if (parts.length < 2) {
+            System.out.println("Usage: /call <username>");
+            return;
+        }
+        String recipient = parts[1].trim();
+        callManager.initiateCall(recipient);
+    }
+
+    // Manejar el comando de finalizar llamada
+    private static void handleEndCallCommand(String command) {
+        // Formato: /endcall <username>
+        String[] parts = command.split(" ", 2);
+        if (parts.length < 2) {
+            System.out.println("Usage: /endcall <username>");
+            return;
+        }
+        String participant = parts[1].trim();
+        callManager.endCall(participant);
+    }
+
+    // Manejar el envío de mensajes de voz
     private static void handleVoiceCommand(String command, TCPConnection clientConnection) {
         String[] parts = command.split(" ", 2);
         if (parts.length < 2) {
             System.out.println("Usage: /voice <username|group_name>");
             return;
         }
-        String recipient = parts[1];
+        String recipient = parts[1].trim();
 
         // Configurar el formato de audio
         AudioFormat format = getAudioFormat();
@@ -113,6 +164,7 @@ public class ChatClient {
         System.out.println("Voice message sent to " + recipient);
     }
 
+    // Manejar la recepción de mensajes de voz
     private static void handleVoiceMessage(String message) {
         // Formato: VOICE:<sender>:<data_audio_base64>
         String[] parts = message.split(":", 3);
@@ -120,13 +172,18 @@ public class ChatClient {
             System.out.println("Received malformed voice message.");
             return;
         }
-        String sender = parts[1];
+        String sender = parts[1].trim();
         String encodedAudio = parts[2];
         byte[] audioData = Base64.getDecoder().decode(encodedAudio);
 
         // Reproducir el audio
-        RecordPlayer player = new RecordPlayer(getAudioFormat());
-        player.initiateAudio(audioData);
+        if (callManager != null && callManager.currentCallParticipant != null && callManager.currentCallParticipant.equals(sender)) {
+            try {
+                callManager.player.initiateAudio(audioData);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         System.out.println("Received voice message from " + sender);
     }
 
@@ -137,5 +194,14 @@ public class ChatClient {
         boolean signed = true;
         boolean bigEndian = false;
         return new AudioFormat(sampleRate, sampleSizeInBits, channels, signed, bigEndian);
+    }
+
+    // Métodos para interactuar con CallManager desde otras clases
+    public void displayMessage(String message) {
+        System.out.println(message);
+    }
+
+    public void sendMessage(String message) {
+        clientConnection.sendMessage(message);
     }
 }

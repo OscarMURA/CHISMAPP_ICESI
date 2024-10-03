@@ -9,11 +9,13 @@ public class ChatServer {
 
     private static final int THREAD_POOL_SIZE = 10;
     private static GroupManager groupManager;
+    private static CallManager callManager;
 
     public static void main(String[] args) {
 
         ExecutorService pool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
         groupManager = new GroupManager();  // Inicializa el gestor de grupos
+        callManager = new CallManager();    // Inicializa el gestor de llamadas
 
         try (ServerSocket serverSocket = new ServerSocket(0)) { // Puerto automático asignado
             int assignedPort = serverSocket.getLocalPort(); // Obtener el puerto asignado
@@ -30,7 +32,7 @@ public class ChatServer {
                 System.out.println("New client connected: " + clientSocket.getInetAddress());
 
                 // Crea un nuevo ClientHandler para cada cliente y lo ejecuta en el pool de hilos
-                ClientHandler clientHandler = new ClientHandler(clientSocket, groupManager);
+                ClientHandler clientHandler = new ClientHandler(clientSocket, groupManager, callManager);
                 pool.execute(clientHandler);
             }
 
