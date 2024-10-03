@@ -31,7 +31,7 @@ public class ChatClient {
         }
 
         // Inicializar la conexión del cliente con la IP y el puerto del servidor descubierto
-        TCPConnection clientConnection = TCPConnection.getInstance();
+        clientConnection = TCPConnection.getInstance();
         clientConnection.initAsClient(serverIp, serverPort);
 
         // Inicializar CallManager
