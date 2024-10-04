@@ -86,7 +86,7 @@ public class CallManager {
                     while (!Thread.currentThread().isInterrupted() && currentCallParticipant != null) {
                         int bytesRead = microphone.read(buffer, 0, buffer.length);
                         if (bytesRead > 0) {
-                            System.out.println("Bytes capturados: " + bytesRead);  // Verificar cuántos bytes se están capturando
+                            //System.out.println("Bytes capturados: " + bytesRead);  // Verificar cuántos bytes se están capturando
                             String encodedAudio = Base64.getEncoder().encodeToString(Arrays.copyOf(buffer, bytesRead));  // Codificar solo los bytes leídos
                             chatClient.sendMessage("VOICE:" + currentCallParticipant + ":" + encodedAudio);  // Enviar audio
                         }
