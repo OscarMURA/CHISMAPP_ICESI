@@ -63,6 +63,12 @@ public class CallManager {
     public void handleIncomingCall(String caller) {
         acceptCall(caller);  // Aceptar automáticamente la llamada
     }
+    
+    public void handleCallEnded(String participant) {
+        chatClient.displayMessage("SYSTEM: Llamada finalizada con " + participant);
+        currentCallParticipant = null;
+        stopAudioSession();
+    }
 
     // Manejar aceptación de llamada
     public void handleCallAccepted(String recipient) {

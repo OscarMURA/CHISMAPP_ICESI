@@ -49,7 +49,10 @@ public class ChatClient {
             } else if (message.startsWith("CALL_ACCEPTED:")) {
                 String recipient = message.substring("CALL_ACCEPTED:".length()).trim();
                 callManager.handleCallAccepted(recipient);
-            } else {
+            } else if (message.startsWith("CALL_ENDED:")) {
+                String participant = message.substring("CALL_ENDED:".length()).trim();
+                callManager.handleCallEnded(participant);
+            }else {
                 System.out.println(message);
             }
         });
