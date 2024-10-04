@@ -40,6 +40,12 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+    
+      <dependency>
+        <groupId>com.googlecode.soundlibs</groupId>
+        <artifactId>tritonus-share</artifactId>
+        <version>0.3.7-2</version>
+      </dependency>
     </dependencies>
 
     <build>
