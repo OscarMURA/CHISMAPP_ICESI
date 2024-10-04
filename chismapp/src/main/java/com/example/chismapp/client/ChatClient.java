@@ -178,7 +178,7 @@ public class ChatClient {
 
         // Reproducir el audio utilizando la instancia persistente de RecordPlayer
         recordPlayer.initiateAudio(audioData);
-        System.out.println("Received voice message from " + sender);
+        //System.out.println("Received voice message from " + sender);
     }
 
     private static AudioFormat getAudioFormat() {

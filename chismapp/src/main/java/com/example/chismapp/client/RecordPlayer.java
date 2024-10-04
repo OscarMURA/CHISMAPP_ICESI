@@ -31,7 +31,7 @@ public class RecordPlayer {
         }
         try {
             out.write(audioData, 0, audioData.length);  // Escribir los datos directamente
-            System.out.println("Audio written to SourceDataLine: " + audioData.length + " bytes");
+            //System.out.println("Audio written to SourceDataLine: " + audioData.length + " bytes");
         } catch (Exception e) {
             System.out.println("Error durante la reproducción de audio: " + e.getMessage());
         }
