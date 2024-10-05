@@ -7,12 +7,15 @@ import java.io.InputStreamReader;
 import java.util.Base64;
 import javax.sound.sampled.AudioFormat;
 import com.example.chismapp.util.TCPConnection;
+import com.example.chismapp.util.eTypeRecord;
+import com.example.chismapp.util.HistorialRecorder;
 
 public class ChatClient {
 
     private static CallManager callManager;
     private static TCPConnection clientConnection;
     public static RecordPlayer recordPlayer; // Instancia persistente
+    private static HistorialRecorder recorder;
 
     public static void main(String[] args) {
         // Crear una instancia de ClientDiscovery y buscar el servidor
@@ -66,6 +69,9 @@ public class ChatClient {
 
             clientConnection.sendMessage("USERNAME:" + clientName);  // Enviar el nombre de usuario del cliente al servidor
 
+            recorder = new HistorialRecorder();
+            recorder.addMessage(clientName, eTypeRecord.STARTED_CONNECTION);
+
             // Mostrar comandos disponibles
             System.out.println("Available commands:");
             System.out.println("/group group_name - To create/join a group");
@@ -74,24 +80,34 @@ public class ChatClient {
             System.out.println("/voice <username|group_name> - To send a voice message");
             System.out.println("/call <username> - To initiate a call to a user");
             System.out.println("/endcall <username> - To end a call with a user");
+            System.out.println("/historical - To generate the record of the messages");
 
 
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("/group")) {
                     clientConnection.sendMessage(line);  // Enviar comando para crear un grupo
+                    recorder.addMessage(clientName + " joined or created a group " + line.substring(7), eTypeRecord.GROUP);
                 } else if (line.startsWith("/message")) {
                     clientConnection.sendMessage(line);  // Enviar un mensaje a un grupo
+                    recorder.addMessage(clientName + " sended message to the group " + line.substring(9), eTypeRecord.TEXT);
                 } else if (line.startsWith("/dm")) {
                     clientConnection.sendMessage(line);  // Enviar un mensaje directo
+                    recorder.addMessage(clientName + " sended message to the user " + line.substring(4), eTypeRecord.TEXT);
                 } else if (line.startsWith("/voice")) {
                     handleVoiceCommand(line, clientConnection);
+                    recorder.addMessage(clientName + " voice messaged " + line.substring(7), eTypeRecord.AUDIO);
                 } else if (line.startsWith("/call")) {
                     handleCallCommand(line);
+                    recorder.addMessage(clientName + " called " + line.substring(6), eTypeRecord.CALL);
                 } else if (line.startsWith("/endcall")) {
                     handleEndCallCommand(line);
+                    recorder.addMessage("Ended call " + line.substring(9), eTypeRecord.CALL);
+                } else if (line.startsWith("/historical")) {
+                    recorder.generate();
+                    System.out.println("Generating the record of messages");
                 } else {
-                    System.out.println("Invalid command. Use /group, /message, /dm, /voice, /call, or /endcall.");
+                    System.out.println("Invalid command. Use /group, /message, /dm, /voice, /call, /endcall or /historical.");
                 }
             }
 
@@ -196,9 +212,14 @@ public class ChatClient {
     // Métodos para interactuar con CallManager desde otras clases
     public void displayMessage(String message) {
         System.out.println(message);
+        recorder.addMessage(message, eTypeRecord.RECEIVED);
     }
 
     public void sendMessage(String message) {
         clientConnection.sendMessage(message);
+    }
+
+    public HistorialRecorder getRecorder(){
+        return recorder;
     }
 }

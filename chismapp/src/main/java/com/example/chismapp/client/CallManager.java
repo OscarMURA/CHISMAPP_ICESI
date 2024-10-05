@@ -3,6 +3,9 @@ package com.example.chismapp.client;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.TargetDataLine;
+
+import com.example.chismapp.util.eTypeRecord;
+
 import java.util.Arrays;
 import java.util.Base64;
 
@@ -35,6 +38,7 @@ public class CallManager {
         chatClient.sendMessage("CALL_ACCEPT:" + caller);
         currentCallParticipant = caller;
         chatClient.displayMessage("SYSTEM: Llamada aceptada con " + caller);
+        chatClient.getRecorder().addMessage("Call acepted with " + caller, eTypeRecord.RECEIVED);
         startAudioSession();  // Iniciar la sesión de audio después de aceptar la llamada
     }
 
@@ -52,6 +56,7 @@ public class CallManager {
         }
         chatClient.sendMessage("CALL_END:" + participant);  // Comando para finalizar la llamada
         chatClient.displayMessage("SYSTEM: Llamada finalizada con " + participant);
+        chatClient.getRecorder().addMessage("Call ended with " + participant, eTypeRecord.RECEIVED);
         stopAudioSession();  // Detener la sesión de grabación de audio
         currentCallParticipant = null;
         if (chatClient.recordPlayer != null) {
@@ -66,6 +71,7 @@ public class CallManager {
     
     public void handleCallEnded(String participant) {
         chatClient.displayMessage("SYSTEM: Llamada finalizada con " + participant);
+        chatClient.getRecorder().addMessage("Call ended with " + participant, eTypeRecord.RECEIVED);
         currentCallParticipant = null;
         stopAudioSession();
     }
