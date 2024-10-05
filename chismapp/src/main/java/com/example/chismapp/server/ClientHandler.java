@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClientHandler implements Runnable {
@@ -12,44 +13,61 @@ public class ClientHandler implements Runnable {
     private static ConcurrentHashMap<String, ClientHandler> userHandlers = new ConcurrentHashMap<>();
     private Socket clientSocket;
     private GroupManager groupManager;
+    private CallManager callManager;
     private String userName;
+    private PrintWriter out;
 
-    public ClientHandler(Socket socket, GroupManager groupManager) {
+    public ClientHandler(Socket socket, GroupManager groupManager, CallManager callManager) {
         this.clientSocket = socket;
         this.groupManager = groupManager;
+        this.callManager = callManager;
     }
 
     @Override
     public void run() {
         try (
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)
+                PrintWriter outWriter = new PrintWriter(clientSocket.getOutputStream(), true)
         ) {
+            this.out = outWriter; // Asignar PrintWriter a la variable de instancia
             String message;
             // Escucha mensajes del cliente y responde
             while ((message = in.readLine()) != null) {
                 // Procesar el mensaje recibido
                 if (message.startsWith("USERNAME:")) {
-                    this.userName = message.substring(9); // Extrae el nombre del usuario
+                    this.userName = message.substring(9).trim(); // Extrae el nombre del usuario
                     userHandlers.put(userName, this); // Añadir el usuario a la lista de manejadores
                     System.out.println("User connected: " + userName);
+                    sendMessage("SYSTEM: Welcome " + userName + "!");
                 } else if (message.startsWith("/group")) {
                     String[] parts = message.split(" ", 2);
-                    String groupName = parts[1];
+                    if (parts.length < 2) {
+                        out.println("SYSTEM: Usage: /group <groupName>");
+                        continue;
+                    }
+                    String groupName = parts[1].trim();
                     groupManager.createGroup(groupName, this);
-                    out.println("You have created/joined the group: " + groupName);
+                    out.println("SYSTEM: You have created/joined the group: " + groupName);
                 } else if (message.startsWith("/message")) {
                     String[] parts = message.split(" ", 3);
-                    String groupName = parts[1];
-                    String msgContent = parts[2];
+                    if (parts.length < 3) {
+                        out.println("SYSTEM: Usage: /message <groupName> <message>");
+                        continue;
+                    }
+                    String groupName = parts[1].trim();
+                    String msgContent = parts[2].trim();
                     String fullMessage = "[" + groupName + "] " + userName + ": " + msgContent;
 
                     // Reenviar el mensaje al grupo
                     groupManager.sendMessageToGroup(groupName, fullMessage);
                 } else if (message.startsWith("/dm")) {
                     String[] parts = message.split(" ", 3);
-                    String targetUserName = parts[1];
-                    String msgContent = parts[2];
+                    if (parts.length < 3) {
+                        out.println("SYSTEM: Usage: /dm <username> <message>");
+                        continue;
+                    }
+                    String targetUserName = parts[1].trim();
+                    String msgContent = parts[2].trim();
                     String fullMessage = "[Direct Message] " + userName + ": " + msgContent;
 
                     // Enviar el mensaje directo al usuario específico
@@ -57,16 +75,24 @@ public class ClientHandler implements Runnable {
                     if (targetHandler != null) {
                         targetHandler.sendMessage(fullMessage);
                     } else {
-                        out.println("User " + targetUserName + " not found.");
+                        out.println("SYSTEM: User " + targetUserName + " not found.");
                     }
                 } else if (message.startsWith("VOICE:")) {
                     handleVoiceMessage(message);
+                } else if (message.startsWith("CALL_INITIATE:")) {
+                    handleCallInitiate(message);
+                } else if (message.startsWith("CALL_ACCEPT:")) {
+                    handleCallAccept(message);
+                } else if (message.startsWith("CALL_REJECT:")) {
+                    handleCallReject(message);
+                } else if (message.startsWith("CALL_END:")) {
+                    handleCallEnd(message);
                 } else {
-                    out.println("Invalid command. Use /group, /message, /dm, or this was VOICE MESSAGE.");
+                    out.println("SYSTEM: Invalid command. Use /group, /message, /dm, or VOICE/CALL commands.");
                 }
             }
         } catch (IOException e) {
-            System.out.println("Error handling client, for remove users " );
+            System.out.println("Error handling client, removing user if applicable.");
         } finally {
             // Manejar la desconexión del usuario
             try {
@@ -87,11 +113,11 @@ public class ClientHandler implements Runnable {
         // Formato: VOICE:<destinatario>:<datos_audio_base64>
         String[] parts = message.split(":", 3);
         if (parts.length < 3) {
-            sendMessage("Malformed VOICE message.");
+            sendMessage("SYSTEM: Malformed VOICE message.");
             return;
         }
-        String recipient = parts[1];
-        String encodedAudio = parts[2];
+        String recipient = parts[1].trim();
+        String encodedAudio = parts[2].trim();
         String fullMessage = "VOICE:" + userName + ":" + encodedAudio;
 
         // Verificar si el destinatario es un grupo o un usuario
@@ -103,18 +129,109 @@ public class ClientHandler implements Runnable {
             if (targetHandler != null) {
                 targetHandler.sendMessage(fullMessage);
             } else {
-                sendMessage("User " + recipient + " not found.");
+                sendMessage("SYSTEM: User " + recipient + " not found.");
             }
         }
     }
 
-    public void sendMessage(String message) {
-        try {
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-            out.println(message);
-        } catch (IOException e) {
-            e.printStackTrace();
+    // Método para manejar la iniciación de una llamada
+    private void handleCallInitiate(String message) {
+        // Formato: CALL_INITIATE:<recipient>
+        String[] parts = message.split(":", 2);
+        if (parts.length < 2) {
+            sendMessage("SYSTEM: Malformed CALL_INITIATE message.");
+            return;
         }
+        String recipient = parts[1].trim();
+
+        // Verificar si el destinatario existe y no está en otra llamada
+        if (!callManager.isInCall(recipient)) {
+            boolean initiated = callManager.initiateCall(this.userName, recipient);
+            if (initiated) {
+                sendMessage("SYSTEM: Call initiated to " + recipient);
+                ClientHandler targetHandler = userHandlers.get(recipient);
+                if (targetHandler != null) {
+                    targetHandler.sendMessage("CALL_INITIATED:" + this.userName);
+                }
+            } else {
+                sendMessage("SYSTEM: Unable to initiate call. " + recipient + " is already in a call.");
+            }
+        } else {
+            sendMessage("SYSTEM: User " + recipient + " is already in a call.");
+        }
+    }
+
+    // Método para manejar la aceptación de una llamada
+    private void handleCallAccept(String message) {
+        // Formato: CALL_ACCEPT:<caller>
+        String[] parts = message.split(":", 2);
+        if (parts.length < 2) {
+            sendMessage("SYSTEM: Malformed CALL_ACCEPT message.");
+            return;
+        }
+        String caller = parts[1].trim();
+
+        CallSession session = callManager.getCallSession(caller);
+        if (session != null && session.getRecipient().equals(this.userName)) {
+            callManager.acceptCall(this.userName, caller);
+            sendMessage("SYSTEM: Call accepted with " + caller);
+            ClientHandler callerHandler = userHandlers.get(caller);
+            if (callerHandler != null) {
+                callerHandler.sendMessage("CALL_ACCEPTED:" + this.userName);
+            }
+        } else {
+            sendMessage("SYSTEM: No incoming call from " + caller + ".");
+        }
+    }
+
+    // Método para manejar el rechazo de una llamada
+    private void handleCallReject(String message) {
+        // Formato: CALL_REJECT:<caller>
+        String[] parts = message.split(":", 2);
+        if (parts.length < 2) {
+            sendMessage("SYSTEM: Malformed CALL_REJECT message.");
+            return;
+        }
+        String caller = parts[1].trim();
+
+        CallSession session = callManager.getCallSession(caller);
+        if (session != null && session.getRecipient().equals(this.userName)) {
+            callManager.rejectCall(this.userName, caller);
+            sendMessage("SYSTEM: Call rejected with " + caller);
+            ClientHandler callerHandler = userHandlers.get(caller);
+            if (callerHandler != null) {
+                callerHandler.sendMessage("CALL_REJECTED:" + this.userName);
+            }
+        } else {
+            sendMessage("SYSTEM: No incoming call from " + caller + ".");
+        }
+    }
+
+    // Método para manejar el final de una llamada
+    private void handleCallEnd(String message) {
+        // Formato: CALL_END:<otherParticipant>
+        String[] parts = message.split(":", 2);
+        if (parts.length < 2) {
+            sendMessage("SYSTEM: Malformed CALL_END message.");
+            return;
+        }
+        String otherParticipant = parts[1].trim();
+
+        CallSession session = callManager.getCallSession(this.userName);
+        if (session != null && (session.getCaller().equals(otherParticipant) || session.getRecipient().equals(otherParticipant))) {
+            callManager.endCall(this.userName);
+            sendMessage("SYSTEM: Call ended with " + otherParticipant);
+            ClientHandler otherHandler = userHandlers.get(otherParticipant);
+            if (otherHandler != null) {
+                otherHandler.sendMessage("CALL_ENDED:" + this.userName);
+            }
+        } else {
+            sendMessage("SYSTEM: No active call with " + otherParticipant + ".");
+        }
+    }
+
+    public void sendMessage(String message) {
+        out.println(message);
     }
 
     // Método para difundir mensajes a todos los usuarios excepto este
