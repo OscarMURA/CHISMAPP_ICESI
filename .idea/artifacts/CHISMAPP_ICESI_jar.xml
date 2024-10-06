@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="CHISMAPP_ICESI:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/CHISMAPP_ICESI_jar</output-path>
+    <root id="archive" name="CHISMAPP_ICESI.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+    </root>
+  </artifact>
+</component>
