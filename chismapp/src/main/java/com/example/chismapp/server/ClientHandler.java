@@ -145,21 +145,24 @@ public class ClientHandler implements Runnable {
         String recipient = parts[1].trim();
 
         // Verificar si el destinatario existe y no está en otra llamada
-        if (!callManager.isInCall(recipient)) {
-            boolean initiated = callManager.initiateCall(this.userName, recipient);
-            if (initiated) {
-                sendMessage("SYSTEM: Call initiated to " + recipient);
-                ClientHandler targetHandler = userHandlers.get(recipient);
-                if (targetHandler != null) {
-                    targetHandler.sendMessage("CALL_INITIATED:" + this.userName);
+        if (!callManager.isInCall(recipient) && !callManager.isInCall(this.userName)) {
+            // Enviar solicitud de llamada al destinatario
+            ClientHandler targetHandler = userHandlers.get(recipient);
+            if (targetHandler != null) {
+                // Marcar la llamada como pendiente en el CallManager
+                boolean pending = callManager.initiatePendingCall(this.userName, recipient);
+                if (pending) {
+                    targetHandler.sendMessage("CALL_REQUEST:" + this.userName);
+                    sendMessage("SYSTEM: Call request sent to " + recipient + ". Waiting for response...");
                 }
             } else {
-                sendMessage("SYSTEM: Unable to initiate call. " + recipient + " is already in a call.");
+                sendMessage("SYSTEM: User " + recipient + " not found.");
             }
         } else {
-            sendMessage("SYSTEM: User " + recipient + " is already in a call.");
+            sendMessage("SYSTEM: User " + recipient + " is already in a call or you are in a call.");
         }
     }
+
 
     // Método para manejar la aceptación de una llamada
     private void handleCallAccept(String message) {
@@ -171,9 +174,11 @@ public class ClientHandler implements Runnable {
         }
         String caller = parts[1].trim();
 
-        CallSession session = callManager.getCallSession(caller);
+        CallSession session = callManager.getPendingCallSession(caller);
         if (session != null && session.getRecipient().equals(this.userName)) {
             callManager.acceptCall(this.userName, caller);
+            session.setAccepted(true);
+            session.setActive(true);  // Establecer llamada como activa
             sendMessage("SYSTEM: Call accepted with " + caller);
             ClientHandler callerHandler = userHandlers.get(caller);
             if (callerHandler != null) {
@@ -183,6 +188,8 @@ public class ClientHandler implements Runnable {
             sendMessage("SYSTEM: No incoming call from " + caller + ".");
         }
     }
+
+
 
     // Método para manejar el rechazo de una llamada
     private void handleCallReject(String message) {
@@ -194,10 +201,10 @@ public class ClientHandler implements Runnable {
         }
         String caller = parts[1].trim();
 
-        CallSession session = callManager.getCallSession(caller);
+        CallSession session = callManager.getPendingCallSession(caller);
         if (session != null && session.getRecipient().equals(this.userName)) {
             callManager.rejectCall(this.userName, caller);
-            sendMessage("SYSTEM: Call rejected with " + caller);
+            sendMessage("SYSTEM: Call rejected from " + caller);
             ClientHandler callerHandler = userHandlers.get(caller);
             if (callerHandler != null) {
                 callerHandler.sendMessage("CALL_REJECTED:" + this.userName);
@@ -207,7 +214,9 @@ public class ClientHandler implements Runnable {
         }
     }
 
+
     // Método para manejar el final de una llamada
+
     private void handleCallEnd(String message) {
         // Formato: CALL_END:<otherParticipant>
         String[] parts = message.split(":", 2);
@@ -220,6 +229,7 @@ public class ClientHandler implements Runnable {
         CallSession session = callManager.getCallSession(this.userName);
         if (session != null && (session.getCaller().equals(otherParticipant) || session.getRecipient().equals(otherParticipant))) {
             callManager.endCall(this.userName);
+            session.endCall();  // Marcar la sesión como finalizada
             sendMessage("SYSTEM: Call ended with " + otherParticipant);
             ClientHandler otherHandler = userHandlers.get(otherParticipant);
             if (otherHandler != null) {

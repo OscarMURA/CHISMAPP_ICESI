@@ -39,8 +39,14 @@ public class CallManager {
         currentCallParticipant = caller;
         chatClient.displayMessage("SYSTEM: Llamada aceptada con " + caller);
         chatClient.getRecorder().addMessage("Call acepted with " + caller, eTypeRecord.RECEIVED);
+
+        if (chatClient.recordPlayer != null) {
+            chatClient.recordPlayer.stopPlayback();  // Asegurarse de detener cualquier reproducción en curso
+            chatClient.recordPlayer.restartPlayback(); // Reiniciar el reproductor antes de iniciar la sesión
+        }
         startAudioSession();  // Iniciar la sesión de audio después de aceptar la llamada
     }
+
 
     // Rechazar una llamada entrante
     public void rejectCall(String caller) {
@@ -55,26 +61,27 @@ public class CallManager {
             return;
         }
         chatClient.sendMessage("CALL_END:" + participant);  // Comando para finalizar la llamada
-        chatClient.displayMessage("SYSTEM: Llamada finalizada con " + participant);
-        chatClient.getRecorder().addMessage("Call ended with " + participant, eTypeRecord.RECEIVED);
-        stopAudioSession();  // Detener la sesión de grabación de audio
-        currentCallParticipant = null;
-        if (chatClient.recordPlayer != null) {
-            chatClient.recordPlayer.stopPlayback();  // Detener la reproducción
-        }
+        handleCallEnded(participant);  // Manejar el final de la llamada localmente
     }
+
+
 
     // Manejar recepción de llamada iniciada
     public void handleIncomingCall(String caller) {
-        acceptCall(caller);  // Aceptar automáticamente la llamada
+        chatClient.displayMessage("SYSTEM: Recibiste una solicitud de llamada de " + caller + ". Usa /acceptcall o /rejectcall para responder.");
     }
-    
+
     public void handleCallEnded(String participant) {
         chatClient.displayMessage("SYSTEM: Llamada finalizada con " + participant);
         chatClient.getRecorder().addMessage("Call ended with " + participant, eTypeRecord.RECEIVED);
-        currentCallParticipant = null;
-        stopAudioSession();
+        currentCallParticipant = null;  // Limpiar el participante actual
+        stopAudioSession();  // Detener la sesión de audio
+        if (chatClient.recordPlayer != null) {
+            chatClient.recordPlayer.stopPlayback();  // Detener cualquier reproducción en curso
+        }
     }
+
+
 
     // Manejar aceptación de llamada
     public void handleCallAccepted(String recipient) {
@@ -84,7 +91,21 @@ public class CallManager {
     }
 
     // Iniciar sesión de audio (capturar audio desde el micrófono y enviar)
+    public void stopAudioSession() {
+        if (recordThread != null && recordThread.isAlive()) {
+            recordThread.interrupt();  // Interrumpir el hilo de grabación
+            try {
+                recordThread.join();  // Esperar a que el hilo termine
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            recordThread = null; // Asegurarse de reiniciar la referencia
+        }
+        chatClient.displayMessage("SYSTEM: Sesión de audio detenida.");
+    }
+
     private void startAudioSession() {
+        stopAudioSession(); // Asegúrate de detener cualquier sesión anterior antes de iniciar una nueva
         try {
             AudioFormat format = getAudioFormat();
             TargetDataLine microphone = AudioSystem.getTargetDataLine(format);
@@ -98,19 +119,22 @@ public class CallManager {
                     while (!Thread.currentThread().isInterrupted() && currentCallParticipant != null) {
                         int bytesRead = microphone.read(buffer, 0, buffer.length);
                         if (bytesRead > 0) {
-                            //System.out.println("Bytes capturados: " + bytesRead);  // Verificar cuántos bytes se están capturando
                             String encodedAudio = Base64.getEncoder().encodeToString(Arrays.copyOf(buffer, bytesRead));  // Codificar solo los bytes leídos
                             chatClient.sendMessage("VOICE:" + currentCallParticipant + ":" + encodedAudio);  // Enviar audio
                         }
-
                         if (Thread.currentThread().isInterrupted()) {
-                            break;
+                            break;  // Salir del bucle si el hilo ha sido interrumpido
                         }
                     }
-                    microphone.close();
-                    chatClient.displayMessage("SYSTEM: Sesión de audio detenida.");
                 } catch (Exception e) {
                     e.printStackTrace();
+                } finally {
+                    // Asegúrate de cerrar el micrófono siempre, incluso si hay una excepción
+                    if (microphone != null && microphone.isOpen()) {
+                        microphone.stop();
+                        microphone.close();
+                    }
+                    chatClient.displayMessage("SYSTEM: Sesión de audio detenida.");
                 }
             });
 
@@ -121,19 +145,6 @@ public class CallManager {
             chatClient.displayMessage("SYSTEM: No se pudo iniciar la sesión de audio.");
             e.printStackTrace();
         }
-    }
-
-    // Detener la sesión de audio
-    public void stopAudioSession() {
-        if (recordThread != null && recordThread.isAlive()) {
-            recordThread.interrupt();  // Interrumpir el hilo de grabación
-            try {
-                recordThread.join();  // Esperar a que el hilo termine
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        chatClient.displayMessage("SYSTEM: Sesión de audio detenida.");
     }
 
     // Enviar mensaje de rechazo de llamada

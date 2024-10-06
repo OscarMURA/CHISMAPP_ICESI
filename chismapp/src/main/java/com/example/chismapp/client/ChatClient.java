@@ -54,8 +54,8 @@ public class ChatClient {
                 callManager.handleCallAccepted(recipient);
             } else if (message.startsWith("CALL_ENDED:")) {
                 String participant = message.substring("CALL_ENDED:".length()).trim();
-                callManager.handleCallEnded(participant);
-            }else {
+                callManager.handleCallEnded(participant);  // Manejar la finalización de la llamada
+            } else {
                 System.out.println(message);
             }
         });
@@ -106,6 +106,12 @@ public class ChatClient {
                 } else if (line.startsWith("/historical")) {
                     recorder.generate();
                     System.out.println("Generating the record of messages");
+                } else if (line.startsWith("/acceptcall")) {
+                    handleAcceptCallCommand(line);
+                    recorder.addMessage("Accepted call from " + line.substring(12), eTypeRecord.CALL);
+                } else if (line.startsWith("/rejectcall")) {
+                    handleRejectCallCommand(line);
+                    recorder.addMessage("Rejected call from " + line.substring(12), eTypeRecord.CALL);
                 } else {
                     System.out.println("Invalid command. Use /group, /message, /dm, /voice, /call, /endcall or /historical.");
                 }
@@ -207,6 +213,31 @@ public class ChatClient {
         boolean signed = true;
         boolean bigEndian = false;
         return new AudioFormat(sampleRate, sampleSizeInBits, channels, signed, bigEndian);
+    }
+
+    // Manejar el comando de aceptar llamada
+
+    private static void handleAcceptCallCommand(String command) {
+        // Formato: /acceptcall <caller>
+        String[] parts = command.split(" ", 2);
+        if (parts.length < 2) {
+            System.out.println("Usage: /acceptcall <caller>");
+            return;
+        }
+        String caller = parts[1].trim();
+        callManager.acceptCall(caller);
+    }
+
+    // Manejar el comando de rechazar llamada
+    private static void handleRejectCallCommand(String command) {
+        // Formato: /rejectcall <caller>
+        String[] parts = command.split(" ", 2);
+        if (parts.length < 2) {
+            System.out.println("Usage: /rejectcall <caller>");
+            return;
+        }
+        String caller = parts[1].trim();
+        callManager.rejectCall(caller);
     }
 
     // Métodos para interactuar con CallManager desde otras clases
