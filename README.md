@@ -14,6 +14,21 @@ El objetivo de este programa es proporcionar una plataforma de chat en tiempo re
 
 Además, la aplicación admite la creación de grupos de chat y la realización de llamadas de voz, todo gestionado mediante comandos simples y efectivos. Esta guía proporciona una descripción detallada de la ejecución del programa y el uso de los comandos disponibles.
 
+## Contexto del Programa
+
+`CHISMAPP_ICESI` es un sistema de chat realizado en Java que está compuesto por dos componentes principales: el servidor y los clientes. El servidor actúa como el eje central que gestiona todas las conexiones de los usuarios (clientes) y facilita la comunicación entre ellos. Los clientes, por otro lado, son los usuarios que se conectan al servidor para enviar y recibir mensajes, ya sea en conversaciones privadas o grupales, e incluso realizar llamadas de voz. El sistema está diseñado para permitir múltiples conexiones simultáneas, asegurando que cada cliente pueda interactuar en tiempo real con los demás participantes del chat.
+
+## Flujo de trabajo entre servidor y clientes
+
+- El servidor se inicia y queda a la espera de las conexiones entrantes de los clientes.
+  
+- Los clientes se conectan al servidor y proporcionan un nombre de usuario único.
+
+- Una vez conectados, los clientes pueden enviar mensajes a otros usuarios de forma directa o en grupos, así como participar en llamadas de voz.
+
+- El servidor actúa como intermediario, asegurándose de que los mensajes y las llamadas lleguen a sus destinatarios, y también maneja las desconexiones de los usuarios.
+
+
 
 ## Ejecucion del programa
 
@@ -35,55 +50,76 @@ Para iniciar el cliente, ejecuta el siguiente comando:
    
 ## Comandos de mensajeria
 
-### Enviar mensaje privado
+### Enviar mensaje privado:
 
-**Comando**: /dm username "message"
-**Descripcion**:  Este comando permite enviar un mensaje directo a un usuario específico. Solo el destinatario verá el mensaje.
-**Ejemplo**: `/dm andres hola`
+- **Comando**: `/dm username "message"`
 
-### Enviar mensaje en grupos
+- **Descripcion**:  Este comando permite enviar un mensaje directo a un usuario específico. Solo el destinatario verá el mensaje.
 
-**Comando**: /message group_name "message"
-**Descripcion**:  Envío de mensajes a un grupo específico. Todos los miembros del grupo recibirán el mensaje.
-**Ejemplo**: `/message icesi hola`
+- **Ejemplo**: `/dm andres hola`
+  
 
-### Enviar mensaje de voz 
+### Enviar mensaje en grupos:
 
-**Comando de inicio de grabacion**: /voice <username|group_name>
-**Finalizar grabacion**: Presiona `enter` para finalizar la grabacion y enviar la nota de voz
-**Descripcion**:  Envía un mensaje de voz a un usuario específico o a un grupo. La duración del mensaje está limitada por el tiempo de grabación antes de presionar
-**Ejemplo usuario**: `/voice andres`
-**Ejemplo grupo**: `/voice icesi`
+- **Comando**: `/message group_name "message"`
+
+- **Descripcion**:  Envío de mensajes a un grupo específico. Todos los miembros del grupo recibirán el mensaje.
+
+- **Ejemplo**: `/message icesi hola`
+  
+
+### Enviar mensaje de voz:
+
+- **Comando de inicio de grabacion**: `/voice <username|group_name>`
+
+- **Finalizar grabacion**: Presiona `enter` para finalizar la grabacion y enviar la nota de voz
+
+- **Descripcion**:  Envía un mensaje de voz a un usuario específico o a un grupo. La duración del mensaje está limitada por el tiempo de grabación antes de presionar
+
+- **Ejemplo usuario**: `/voice andres`
+
+- **Ejemplo grupo**: `/voice icesi`
 
 
 
 ## Comando de grupo
 
-### Ingresar o Crear un Grupo
+### Ingresar o Crear un Grupo:
 
-**Comando**: /group group_name
-**Descripcion**:  Este comando sirve para crear un grupo o para que el usuario ingrese a un grupo especifico ya creado
-**Ejemplo**: `/group icesi`
+- **Comando**: `/group group_name`
+
+- **Descripcion**:  Este comando sirve para crear un grupo o para que el usuario ingrese a un grupo especifico ya creado
+
+- **Ejemplo**: `/group icesi`
+  
 
 ## Comandos de llamada
 
-###  Inicio de una llamada
+###  Inicio de una llamada:
 
-**Comando**: /call "username"
-**Descripcion**:  Inicia una llamada de voz con un usuario específico. Solo el destinatario recibirá la solicitud de llamada.
-**Ejemplo**: `/call andres`
+- **Comando**: `/call "username"`
 
-### Finalizacion de una llamada
+- **Descripcion**:  Inicia una llamada de voz con un usuario específico. Solo el destinatario recibirá la solicitud de llamada.
 
-**Comando**: /endcall "username"
-**Descripcion**:  Este comando sirve para finalizar una llamada en curso con un usuario especifico
-**Ejemplo**: `/endcall andres`
+- **Ejemplo**: `/call andres`
+  
 
-## Comando de historial
+### Finalizacion de una llamada:
 
-**Comando**: /historical 
-**Descripcion**:  Este comando genera un archivo de texto externo con el registro de todos los mensajes enviados y recibidos durante la sesión, incluido las llamadas. 
-**Ejemplo**: `/historical`
+- **Comando**: `/endcall "username"`
+
+- **Descripcion**:  Este comando sirve para finalizar una llamada en curso con un usuario especifico
+
+- **Ejemplo**: `/endcall andres`
+  
+
+## Comando de historial:
+
+- **Comando**: `/historical`
+
+- **Descripcion**:  Este comando genera un archivo de texto externo con el registro de todos los mensajes enviados y recibidos durante la sesión, incluido las llamadas. 
+
+- **Ejemplo**: `/historical`
 
 
 
