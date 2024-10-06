@@ -12,7 +12,7 @@
 
 El objetivo de este programa es proporcionar una plataforma de chat en tiempo real que permite a múltiples usuarios conectarse, interactuar y comunicarse a través de mensajes de texto y voz, así como realizar llamadas. Esta aplicación está diseñada para ofrecer flexibilidad en las comunicaciones mediante funcionalidades como mensajes directos (privados), mensajes grupales, y la posibilidad de mantener un historial de conversaciones.
 
-Además, la aplicación admite la creación de grupos de chat y la realización de llamadas de voz, todo gestionado mediante comandos simples y efectivos. Esta guía proporciona una descripción detallada de la ejecución del programa y el uso de los comandos disponibles.
+Además, la aplicación admite la creación de grupos de chat y la realización de llamadas de voz, todo gestionado mediante comandos simples y efectivos. Esta guía proporciona una descripción detallada de la ejecución del programa y el uso de los comandos disponibles. **Nota importante:** las llamadas solo funcionan si ambos dispositivos están conectados a la misma red local (LAN).
 
 ## Contexto del Programa
 
@@ -111,6 +111,14 @@ Para iniciar el cliente, ejecuta el siguiente comando:
 - **Descripcion**:  Este comando sirve para finalizar una llamada en curso con un usuario especifico
 
 - **Ejemplo**: `/endcall andres`
+
+### Aceptación de una llamada:
+
+- **Comando**: `/acceptcall "username"`
+
+- **Descripcion**:  Este comando sirve para aceptar una llamada con un usuario especifico
+
+- **Ejemplo**: `/acceptcall chamorro`
   
 
 ## Comando de historial:
