@@ -10,39 +10,48 @@ import com.example.chismapp.util.TCPConnection;
 import com.example.chismapp.util.eTypeRecord;
 import com.example.chismapp.util.HistorialRecorder;
 
+/**
+ * The {@code ChatClient} class is the main entry point for the chat client application.
+ * It provides functionality for discovering a server, establishing a TCP connection, sending
+ * messages, initiating and managing voice calls, and recording message history.
+ */
 public class ChatClient {
 
     private static CallManager callManager;
     private static TCPConnection clientConnection;
-    public static RecordPlayer recordPlayer; // Instancia persistente
+    public static RecordPlayer recordPlayer; // Persistent instance for audio playback
     private static HistorialRecorder recorder;
 
+    /**
+     * The main method that starts the chat client, discovers the server, and initializes the connection.
+     *
+     * @param args command-line arguments (not used).
+     */
     public static void main(String[] args) {
-        // Crear una instancia de ClientDiscovery y buscar el servidor
+        // Discover the server automatically using ClientDiscovery
         ClientDiscovery discovery = new ClientDiscovery();
-        discovery.discoverServer();  // Descubrir el servidor automáticamente
+        discovery.discoverServer();  // Attempt to discover the server
 
         String serverIp = discovery.getServerIp();
         int serverPort = discovery.getServerPort();
 
-        // Comprobar si se encontró la IP del servidor
         if (serverIp == null) {
             System.err.println("Could not find the server. Please make sure the server is running and discoverable.");
             return;
         }
 
-        // Inicializar la conexión del cliente con la IP y el puerto del servidor descubierto
+        // Initialize the client connection to the discovered server
         clientConnection = TCPConnection.getInstance();
         clientConnection.initAsClient(serverIp, serverPort);
 
-        // Inicializar CallManager
+        // Initialize CallManager
         ChatClient chatClient = new ChatClient();
         callManager = new CallManager(chatClient);
 
-        // Inicializar RecordPlayer
+        // Initialize RecordPlayer for voice playback
         recordPlayer = new RecordPlayer(getAudioFormat());
 
-        // Asignar un listener para manejar mensajes del servidor
+        // Set up a listener to handle messages from the server
         clientConnection.setListener(message -> {
             if (message.startsWith("VOICE:")) {
                 handleVoiceMessage(message);
@@ -54,7 +63,7 @@ public class ChatClient {
                 callManager.handleCallAccepted(recipient);
             } else if (message.startsWith("CALL_ENDED:")) {
                 String participant = message.substring("CALL_ENDED:".length()).trim();
-                callManager.handleCallEnded(participant);  // Manejar la finalización de la llamada
+                callManager.handleCallEnded(participant);  // Handle the end of a call
             } else {
                 System.out.println(message);
             }
@@ -62,17 +71,16 @@ public class ChatClient {
 
         clientConnection.start();
 
-        // Manejar la entrada del cliente
+        // Handle user input
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             System.out.println("Enter your username:");
             String clientName = reader.readLine();
-
-            clientConnection.sendMessage("USERNAME:" + clientName);  // Enviar el nombre de usuario del cliente al servidor
+            clientConnection.sendMessage("USERNAME:" + clientName);  // Send the username to the server
 
             recorder = new HistorialRecorder();
             recorder.addMessage(clientName, eTypeRecord.STARTED_CONNECTION);
 
-            // Mostrar comandos disponibles
+            // Display available commands
             System.out.println("Available commands:");
             System.out.println("/group group_name - To create/join a group");
             System.out.println("/message group_name <message> - To send a message to a group");
@@ -82,18 +90,17 @@ public class ChatClient {
             System.out.println("/endcall <username> - To end a call with a user");
             System.out.println("/historical - To generate the record of the messages");
 
-
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("/group")) {
-                    clientConnection.sendMessage(line);  // Enviar comando para crear un grupo
+                    clientConnection.sendMessage(line);  // Send a command to create or join a group
                     recorder.addMessage(clientName + " joined or created a group " + line.substring(7), eTypeRecord.GROUP);
                 } else if (line.startsWith("/message")) {
-                    clientConnection.sendMessage(line);  // Enviar un mensaje a un grupo
-                    recorder.addMessage(clientName + " sended message to the group " + line.substring(9), eTypeRecord.TEXT);
+                    clientConnection.sendMessage(line);  // Send a group message
+                    recorder.addMessage(clientName + " sent message to the group " + line.substring(9), eTypeRecord.TEXT);
                 } else if (line.startsWith("/dm")) {
-                    clientConnection.sendMessage(line);  // Enviar un mensaje directo
-                    recorder.addMessage(clientName + " sended message to the user " + line.substring(4), eTypeRecord.TEXT);
+                    clientConnection.sendMessage(line);  // Send a direct message
+                    recorder.addMessage(clientName + " sent message to the user " + line.substring(4), eTypeRecord.TEXT);
                 } else if (line.startsWith("/voice")) {
                     handleVoiceCommand(line, clientConnection);
                     recorder.addMessage(clientName + " voice messaged " + line.substring(7), eTypeRecord.AUDIO);
@@ -116,15 +123,18 @@ public class ChatClient {
                     System.out.println("Invalid command. Use /group, /message, /dm, /voice, /call, /endcall or /historical.");
                 }
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    // Manejar el comando de llamada
+    /**
+     * Handles the /call command from the client input.
+     * Initiates a call to a specified user.
+     *
+     * @param command the command entered by the user (in the format /call <username>).
+     */
     private static void handleCallCommand(String command) {
-        // Formato: /call <username>
         String[] parts = command.split(" ", 2);
         if (parts.length < 2) {
             System.out.println("Usage: /call <username>");
@@ -134,9 +144,13 @@ public class ChatClient {
         callManager.initiateCall(recipient);
     }
 
-    // Manejar el comando de finalizar llamada
+    /**
+     * Handles the /endcall command from the client input.
+     * Ends a call with a specified participant.
+     *
+     * @param command the command entered by the user (in the format /endcall <username>).
+     */
     private static void handleEndCallCommand(String command) {
-        // Formato: /endcall <username>
         String[] parts = command.split(" ", 2);
         if (parts.length < 2) {
             System.out.println("Usage: /endcall <username>");
@@ -144,10 +158,14 @@ public class ChatClient {
         }
         String participant = parts[1].trim();
         callManager.endCall(participant);
-        // No es necesario llamar a callManager.stopAudioSession(), ya se hace en endCall
     }
 
-    // Manejar el envío de mensajes de voz
+    /**
+     * Handles the /voice command for sending a voice message.
+     *
+     * @param command          the command entered by the user (in the format /voice <username|group_name>).
+     * @param clientConnection the connection used to send the voice message.
+     */
     private static void handleVoiceCommand(String command, TCPConnection clientConnection) {
         String[] parts = command.split(" ", 2);
         if (parts.length < 2) {
@@ -156,7 +174,7 @@ public class ChatClient {
         }
         String recipient = parts[1];
 
-        // Configurar el formato de audio
+        // Set up audio format for recording
         AudioFormat format = getAudioFormat();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         RecordAudio recorder = new RecordAudio(format, out);
@@ -171,26 +189,29 @@ public class ChatClient {
         }
 
         recorder.stopRecording();
-        recordThread.interrupt();  // Asegurarse de que el hilo se interrumpe correctamente
+        recordThread.interrupt();  // Ensure thread interruption
         try {
             recordThread.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        // Obtener los datos de audio
+        // Retrieve and encode the audio data
         byte[] audioData = out.toByteArray();
         String encodedAudio = Base64.getEncoder().encodeToString(audioData);
 
-        // Enviar el mensaje de voz
+        // Send the voice message
         String voiceMessage = "VOICE:" + recipient + ":" + encodedAudio;
         clientConnection.sendMessage(voiceMessage);
         System.out.println("Voice message sent to " + recipient);
     }
 
-    // Manejar la recepción de mensajes de voz
+    /**
+     * Handles the reception of a voice message.
+     *
+     * @param message the message received from the server (in the format VOICE:<sender>:<data_audio_base64>).
+     */
     private static void handleVoiceMessage(String message) {
-        // Formato: VOICE:<sender>:<data_audio_base64>
         String[] parts = message.split(":", 3);
         if (parts.length < 3) {
             System.out.println("Received malformed voice message.");
@@ -198,15 +219,19 @@ public class ChatClient {
         }
         String sender = parts[1];
         String encodedAudio = parts[2];
-        
+
         byte[] audioData = Base64.getDecoder().decode(encodedAudio);
 
-        // Reproducir el audio utilizando la instancia persistente de RecordPlayer
+        // Play the audio using the persistent instance of RecordPlayer
         recordPlayer.initiateAudio(audioData);
         recorder.addMessage("Received audio made by: " + message.split(":")[1], eTypeRecord.RECEIVED);
-        //System.out.println("Received voice message from " + sender);
     }
 
+    /**
+     * Returns the {@code AudioFormat} to be used for recording and playback.
+     *
+     * @return the {@code AudioFormat} for voice communication (16 kHz, 16-bit, mono).
+     */
     private static AudioFormat getAudioFormat() {
         float sampleRate = 16000.0F;
         int sampleSizeInBits = 16;
@@ -216,10 +241,13 @@ public class ChatClient {
         return new AudioFormat(sampleRate, sampleSizeInBits, channels, signed, bigEndian);
     }
 
-    // Manejar el comando de aceptar llamada
-
+    /**
+     * Handles the /acceptcall command from the client input.
+     * Accepts an incoming call from a specified user.
+     *
+     * @param command the command entered by the user (in the format /acceptcall <caller>).
+     */
     private static void handleAcceptCallCommand(String command) {
-        // Formato: /acceptcall <caller>
         String[] parts = command.split(" ", 2);
         if (parts.length < 2) {
             System.out.println("Usage: /acceptcall <caller>");
@@ -229,9 +257,13 @@ public class ChatClient {
         callManager.acceptCall(caller);
     }
 
-    // Manejar el comando de rechazar llamada
+    /**
+     * Handles the /rejectcall command from the client input.
+     * Rejects an incoming call from a specified user.
+     *
+     * @param command the command entered by the user (in the format /rejectcall <caller>).
+     */
     private static void handleRejectCallCommand(String command) {
-        // Formato: /rejectcall <caller>
         String[] parts = command.split(" ", 2);
         if (parts.length < 2) {
             System.out.println("Usage: /rejectcall <caller>");
@@ -241,17 +273,31 @@ public class ChatClient {
         callManager.rejectCall(caller);
     }
 
-    // Métodos para interactuar con CallManager desde otras clases
+    /**
+     * Displays a message to the console and records it in the chat history.
+     *
+     * @param message the message to display and record.
+     */
     public void displayMessage(String message) {
         System.out.println(message);
         recorder.addMessage(message, eTypeRecord.RECEIVED);
     }
 
+    /**
+     * Sends a message to the server via the client connection.
+     *
+     * @param message the message to send to the server.
+     */
     public void sendMessage(String message) {
         clientConnection.sendMessage(message);
     }
 
-    public HistorialRecorder getRecorder(){
+    /**
+     * Returns the {@code HistorialRecorder} instance used to log chat and call messages.
+     *
+     * @return the {@code HistorialRecorder} instance.
+     */
+    public HistorialRecorder getRecorder() {
         return recorder;
     }
 }
