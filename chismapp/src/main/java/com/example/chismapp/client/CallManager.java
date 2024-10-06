@@ -9,6 +9,10 @@ import com.example.chismapp.util.eTypeRecord;
 import java.util.Arrays;
 import java.util.Base64;
 
+/**
+ * The `CallManager` class in Java manages audio calls between users, handling call initiation,
+ * acceptance, rejection, and ending, as well as audio session management.
+ */
 public class CallManager {
     private ChatClient chatClient;
     public String currentCallParticipant;

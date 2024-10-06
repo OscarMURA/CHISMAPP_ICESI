@@ -8,6 +8,11 @@ import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * The `ClientHandler` class in the Chismapp server handles communication between clients, manages
+ * group messaging, direct messaging, and call initiation and management.
+ */
+
 public class ClientHandler implements Runnable {
 
     private static ConcurrentHashMap<String, ClientHandler> userHandlers = new ConcurrentHashMap<>();
@@ -17,12 +22,21 @@ public class ClientHandler implements Runnable {
     private String userName;
     private PrintWriter out;
 
+// The above code is defining a constructor for the `ClientHandler` class in Java. It takes three
+// parameters: a `Socket` object named `socket`, a `GroupManager` object named `groupManager`, and a
+// `CallManager` object named `callManager`. Inside the constructor, it assigns the values of these
+// parameters to the corresponding instance variables of the `ClientHandler` class.
     public ClientHandler(Socket socket, GroupManager groupManager, CallManager callManager) {
         this.clientSocket = socket;
         this.groupManager = groupManager;
         this.callManager = callManager;
     }
 
+/**
+ * This Java function handles incoming messages from a client, processes various commands such as
+ * creating groups, sending messages, and managing voice calls, and manages user disconnections in a
+ * chat application.
+ */
     @Override
     public void run() {
         try (
@@ -109,6 +123,14 @@ public class ClientHandler implements Runnable {
         }
     }
 
+/**
+ * The `handleVoiceMessage` function processes a voice message by extracting recipient and audio data,
+ * checking if the recipient is a group or user, and sending the message accordingly.
+ * 
+ * @param message The `handleVoiceMessage` method is designed to process a voice message in a specific
+ * format. The `message` parameter should be in the format `VOICE:<destinatario>:<datos_audio_base64>`,
+ * where:
+ */
     private void handleVoiceMessage(String message) {
         // Formato: VOICE:<destinatario>:<datos_audio_base64>
         String[] parts = message.split(":", 3);
@@ -134,7 +156,15 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    // Método para manejar la iniciación de una llamada
+
+/**
+ * The `handleCallInitiate` function processes a call initiation message, checks if the recipient is
+ * available for a call, and sends a call request if conditions are met.
+ * 
+ * @param message The `handleCallInitiate` method is responsible for initiating a call between two
+ * users in a chat application. The `message` parameter is expected to be in the format
+ * "CALL_INITIATE:<recipient>", where `<recipient>` is the username of the user you want to call.
+ */
     private void handleCallInitiate(String message) {
         // Formato: CALL_INITIATE:<recipient>
         String[] parts = message.split(":", 2);
@@ -164,7 +194,14 @@ public class ClientHandler implements Runnable {
     }
 
 
-    // Método para manejar la aceptación de una llamada
+/**
+ * The `handleCallAccept` function processes a call acceptance message, checks if the call is valid,
+ * accepts the call, and notifies the caller if the call is accepted.
+ * 
+ * @param message The `handleCallAccept` method is used to process a message related to accepting a
+ * call. The `message` parameter contains the information about the call acceptance in the format
+ * "CALL_ACCEPT:<caller>".
+ */
     private void handleCallAccept(String message) {
         // Formato: CALL_ACCEPT:<caller>
         String[] parts = message.split(":", 2);
@@ -191,7 +228,14 @@ public class ClientHandler implements Runnable {
 
 
 
-    // Método para manejar el rechazo de una llamada
+/**
+ * The `handleCallReject` method processes a call rejection message, checks if the call is pending and
+ * from the correct recipient, rejects the call, and notifies the caller accordingly.
+ * 
+ * @param message The `handleCallReject` method is used to process a call rejection message received by
+ * the user. The `message` parameter contains the information about the call rejection in the format
+ * "CALL_REJECT:<caller>".
+ */
     private void handleCallReject(String message) {
         // Formato: CALL_REJECT:<caller>
         String[] parts = message.split(":", 2);
@@ -215,8 +259,16 @@ public class ClientHandler implements Runnable {
     }
 
 
-    // Método para manejar el final de una llamada
 
+/**
+ * The `handleCallEnd` function processes a message indicating the end of a call, checks if the call
+ * session exists with the specified participant, ends the call if found, and notifies the other
+ * participant if applicable.
+ * 
+ * @param message The `handleCallEnd` method is used to process a message related to ending a call. The
+ * `message` parameter should be in the format "CALL_END:<otherParticipant>", where
+ * `<otherParticipant>` is the username of the other participant in the call.
+ */
     private void handleCallEnd(String message) {
         // Formato: CALL_END:<otherParticipant>
         String[] parts = message.split(":", 2);
@@ -240,11 +292,23 @@ public class ClientHandler implements Runnable {
         }
     }
 
+/**
+ * The `sendMessage` function in Java prints a message to the output stream.
+ * 
+ * @param message The `sendMessage` method takes a `String` parameter named `message`, which represents
+ * the message that will be printed to the output stream using `out.println`.
+ */
     public void sendMessage(String message) {
         out.println(message);
     }
 
-    // Método para difundir mensajes a todos los usuarios excepto este
+/**
+ * The `broadcastMessage` function sends a message to all connected clients except for the current
+ * client.
+ * 
+ * @param message A string message that will be broadcasted to all client handlers except for the
+ * current handler.
+ */
     private void broadcastMessage(String message) {
         for (ClientHandler handler : userHandlers.values()) {
             if (!handler.equals(this)) {

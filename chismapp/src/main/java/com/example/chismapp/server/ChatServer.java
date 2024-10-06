@@ -5,6 +5,10 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * The `ChatServer` class initializes group and call managers, listens for client connections on a
+ * dynamically assigned port, and handles client connections using a thread pool.
+ */
 public class ChatServer {
 
     private static final int THREAD_POOL_SIZE = 10;

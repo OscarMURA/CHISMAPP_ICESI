@@ -5,6 +5,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
+/**
+ * The `ServerDiscovery` class in Java sends broadcast announcements containing server information at
+ * regular intervals.
+ */
+
 public class ServerDiscovery {
 
     private int serverPort;
@@ -14,6 +19,10 @@ public class ServerDiscovery {
         this.serverPort = serverPort;
     }
 
+/**
+ * The `startDiscovery` function sends a broadcast announcement containing server information at
+ * regular intervals.
+ */
     public void startDiscovery() {
         try {
             DatagramSocket socket = new DatagramSocket();
