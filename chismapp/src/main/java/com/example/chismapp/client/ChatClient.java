@@ -203,6 +203,7 @@ public class ChatClient {
 
         // Reproducir el audio utilizando la instancia persistente de RecordPlayer
         recordPlayer.initiateAudio(audioData);
+        recorder.addMessage("Received audio made by: " + message.split(":")[1], eTypeRecord.RECEIVED);
         //System.out.println("Received voice message from " + sender);
     }
 

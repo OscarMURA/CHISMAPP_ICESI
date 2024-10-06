@@ -1,5 +1,5 @@
 --------------------------------------------------------
-Initialicing connextion at time: 05-10-2024 15_24_29, with the username: 5
-SYSTEM: Llamada aceptada con 6
-Call acepted with 6
-SYSTEM: Sesión de audio iniciada.
+Initialicing connextion at time: 06-10-2024 13_55_18, with the username: q
+Received audiow
+Group: q joined or created a group a
+Received audiow

@@ -36,6 +36,7 @@ public class CallManager {
             return;
         }
         chatClient.sendMessage("CALL_ACCEPT:" + caller);
+        chatClient.getRecorder().addMessage("Called by: " + caller, eTypeRecord.RECEIVED);
         currentCallParticipant = caller;
         chatClient.displayMessage("SYSTEM: Llamada aceptada con " + caller);
         chatClient.getRecorder().addMessage("Call acepted with " + caller, eTypeRecord.RECEIVED);
@@ -69,6 +70,7 @@ public class CallManager {
     // Manejar recepción de llamada iniciada
     public void handleIncomingCall(String caller) {
         chatClient.displayMessage("SYSTEM: Recibiste una solicitud de llamada de " + caller + ". Usa /acceptcall o /rejectcall para responder.");
+        chatClient.getRecorder().addMessage("Received a call by " + caller, eTypeRecord.RECEIVED);
     }
 
     public void handleCallEnded(String participant) {
@@ -87,6 +89,7 @@ public class CallManager {
     public void handleCallAccepted(String recipient) {
         currentCallParticipant = recipient;
         chatClient.displayMessage("SYSTEM: " + recipient + " aceptó tu llamada.");
+        chatClient.getRecorder().addMessage("Acepted call", eTypeRecord.RECEIVED);
         startAudioSession();
     }
 

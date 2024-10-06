@@ -21,7 +21,7 @@ public class HistorialRecorder{
         String line;
         switch(type){
             case TEXT -> line = "Text:  "; 
-            case AUDIO -> line = "Audio:";
+            case AUDIO -> line = "Audio: ";
             case STARTED_CONNECTION -> line = "Initialicing connextion at time: " + LocalDateTime.now().format(myFormatObj) + ", with the username: ";
             case CALL -> line = "Call:  ";
             case GROUP -> line = "Group: ";
