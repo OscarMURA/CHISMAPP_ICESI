@@ -32,13 +32,34 @@ Además, la aplicación admite la creación de grupos de chat y la realización 
 
 ## Ejecucion del programa
 
+### Prerrequisitos
+Antes de ejecutar este proyecto, asegúrate de tener instalados los siguientes componentes:
+- Java JDK 17 o superior
+- Maven 
+- Git para clonar el repositorio
+- Estar conectado en una red privada: Red de hogar o red Lan compartida por un celular con conexion a internet para ejecutar las conexiones del chat correctamente
+
+### Instrucciones para ejecutar el proyecto
+
+#### Clonar el repositorio
+Abre tu terminal y ejecuta el siguiente comando para clonar el proyecto:
+```bash
+git clone https://github.com/OscarMURA/CHISMAPP_ICESI.git
+```
+Navega hasta la carpeta del proyecto clonado:
+```bash
+cd CHISMAPP_ICESI
+```
+
+### Ejecución dentro de CHISMAPP_ICESI
+
 ### Servidor
 
 El servidor es el núcleo que gestiona todas las conexiones de los clientes y facilita la comunicación entre ellos.
 
 Para iniciar el servidor, utiliza el siguiente comando:
 
-    java -jar out/chatserver.jar
+    java -jar out/ChatServer.jar
 
 ### Cliente
 
@@ -46,7 +67,7 @@ Cada cliente se conecta al servidor para interactuar con otros usuarios y partic
 
 Para iniciar el cliente, ejecuta el siguiente comando:
 
-    java -jar out/chatclient.jar
+    java -jar out/ChatClient.jar
    
 ## Comandos de mensajeria
 
