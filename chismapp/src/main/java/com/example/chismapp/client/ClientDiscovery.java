@@ -45,7 +45,7 @@ public class ClientDiscovery {
             socket.close();
         } catch (IOException e) {
             // Handle any IOExceptions that occur during the process
-            e.printStackTrace();
+            System.out.println("Error discovering server. Repeat the discovery process.");
         }
     }
 

@@ -5,10 +5,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Base64;
+
 import javax.sound.sampled.AudioFormat;
+
+import com.example.chismapp.util.HistorialRecorder;
 import com.example.chismapp.util.TCPConnection;
 import com.example.chismapp.util.eTypeRecord;
-import com.example.chismapp.util.HistorialRecorder;
 
 /**
  * The {@code ChatClient} class is the main entry point for the chat client application.
@@ -27,10 +29,15 @@ public class ChatClient {
      *
      * @param args command-line arguments (not used).
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Discover the server automatically using ClientDiscovery
         ClientDiscovery discovery = new ClientDiscovery();
-        discovery.discoverServer();  // Attempt to discover the server
+        try {
+            discovery.discoverServer();
+        } catch (Exception  e) {
+            Thread.sleep(5000);
+            discovery.discoverServer();
+        }  // Attempt to discover the server
 
         String serverIp = discovery.getServerIp();
         int serverPort = discovery.getServerPort();
@@ -89,6 +96,7 @@ public class ChatClient {
             System.out.println("/call <username> - To initiate a call to a user");
             System.out.println("/endcall <username> - To end a call with a user");
             System.out.println("/historical - To generate the record of the messages");
+            System.out.println("/acceptcall <caller> - To accept an incoming call");
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -109,7 +117,11 @@ public class ChatClient {
                     recorder.addMessage(clientName + " called " + line.substring(6), eTypeRecord.CALL);
                 } else if (line.startsWith("/endcall")) {
                     handleEndCallCommand(line);
-                    recorder.addMessage("Ended call " + line.substring(9), eTypeRecord.CALL);
+                    try {
+                        recorder.addMessage("Ended call " + line.substring(9), eTypeRecord.CALL);
+                    } catch (StringIndexOutOfBoundsException e) {
+                        System.out.println("Invalid command. Use /endcall <username>.");
+                    }
                 } else if (line.startsWith("/historical")) {
                     recorder.generate();
                     System.out.println("Generating the record of messages");

@@ -173,7 +173,7 @@ public class ClientHandler implements Runnable {
             return;
         }
         String recipient = parts[1].trim();
-
+        System.out.println("Call request from " + this.userName + " to " + recipient);
         // Verificar si el destinatario existe y no está en otra llamada
         if (!callManager.isInCall(recipient) && !callManager.isInCall(this.userName)) {
             // Enviar solicitud de llamada al destinatario
