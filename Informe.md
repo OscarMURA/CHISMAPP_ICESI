@@ -226,7 +226,7 @@ A través de este proyecto, se han aplicado conceptos clave de redes y programac
 
 # **Anexos**
 
-## [**-  Diagrama de Clases**](https://github.com/OscarMURA/CHISMAPP_ICESI/blob/main/DIAGRAM%20CLASS%20UML%20-%20CHISMAPP_ICESI.pdf)
+## [**-  Diagrama de Clases**]([https://github.com/OscarMURA/CHISMAPP_ICESI/blob/main/DIAGRAM%20CLASS%20UML%20-%20CHISMAPP_ICESI.pdf](https://github.com/OscarMURA/CHISMAPP_ICESI/blob/main/docs/DIAGRAM%20CLASS%20UML%20-%20CHISMAPP_ICESI.pdf))
 
 
 
